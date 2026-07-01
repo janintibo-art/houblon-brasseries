@@ -162,8 +162,8 @@ body {
 .fab {
   position: absolute;
   right: 16px;
-  bottom: 18px;
-  width: 54px; height: 54px;
+  bottom: 22px;
+  width: 56px; height: 56px;
   border: none;
   border-radius: 16px;
   background: var(--copper);
@@ -172,13 +172,20 @@ body {
   place-items: center;
   cursor: pointer;
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--copper-hi) inset;
-  z-index: 15;
+  z-index: 19;
   transition: transform .12s, background .18s;
 }
 .fab svg { width: 26px; height: 26px; }
 .fab:active { transform: scale(0.9); }
 .fab.is-busy { background: var(--oak-2); color: var(--copper); }
 .fab.is-busy svg { animation: spin 1s linear infinite; }
+
+/* Pulsation pour attirer l'oeil sur le bouton tant qu'on ne l'a pas utilise */
+.fab.attention { animation: fabPulse 1.8s ease-in-out infinite; }
+@keyframes fabPulse {
+  0%, 100% { box-shadow: 0 8px 22px rgba(0,0,0,.5), 0 0 0 1px var(--copper-hi) inset, 0 0 0 0 rgba(217,138,43,.55); }
+  50%      { box-shadow: 0 8px 22px rgba(0,0,0,.5), 0 0 0 1px var(--copper-hi) inset, 0 0 0 14px rgba(217,138,43,0); }
+}
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -361,6 +368,10 @@ body {
   justify-content: flex-end;
 }
 
+/* IMPORTANT : l'attribut "hidden" doit l'emporter sur le display ci-dessus,
+   sinon la fiche reste affichee en permanence et bloque tous les appuis. */
+.detail[hidden] { display: none; }
+
 .detail-panel {
   background: var(--stout);
   border-radius: 22px 22px 0 0;
@@ -534,5 +545,3 @@ body {
   *, .sheet, .detail-panel, .sheet-caret svg { transition: none !important; animation: none !important; }
   .pin-user::after { display: none; }
 }
-
-.detail[hidden]{display:none}

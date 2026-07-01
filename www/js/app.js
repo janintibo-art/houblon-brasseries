@@ -44,7 +44,10 @@ function initMap() {
     attributionControl: true,
     center: [46.6, 2.4],   // centre de la France par defaut
     zoom: 5,
+    minZoom: 3,            // evite la vue "monde entier" avec bandes noires
+    worldCopyJump: true,
   });
+  state.map.setView([46.6, 2.4], 5);
 
   // Fond de carte OpenStreetMap (assombri via CSS). Fiable, sans cle.
   // Pour changer de style, remplacez simplement l'URL ci-dessous.
@@ -52,6 +55,9 @@ function initMap() {
     maxZoom: 19,
     attribution: '&copy; OpenStreetMap',
   }).addTo(state.map);
+
+  // Mention en bas a gauche : laisse le coin bas-droit libre pour le bouton.
+  if (state.map.attributionControl) state.map.attributionControl.setPosition('bottomleft');
 }
 
 // ============================================================
@@ -61,12 +67,18 @@ async function getPosition() {
   const cap = window.Capacitor;
   const isNative = cap && typeof cap.isNativePlatform === 'function' && cap.isNativePlatform();
 
-  // Sur mobile : plugin Geolocation de Capacitor (gere les permissions Android)
-  if (isNative && cap.Plugins && cap.Plugins.Geolocation) {
-    const Geo = cap.Plugins.Geolocation;
-    try { await Geo.requestPermissions(); } catch (e) { /* on tente quand meme */ }
-    const pos = await Geo.getCurrentPosition({ enableHighAccuracy: true, timeout: 20000 });
-    return { lat: pos.coords.latitude, lon: pos.coords.longitude, acc: pos.coords.accuracy };
+  // Sur mobile : plugin Geolocation de Capacitor (gere les permissions Android).
+  // On recupere le plugin via Plugins.Geolocation, ou via registerPlugin qui est
+  // la methode fiable quand le paquet JS n'est pas importe par un bundler.
+  if (isNative) {
+    let Geo = (cap.Plugins && cap.Plugins.Geolocation) ||
+              (typeof cap.registerPlugin === 'function' ? cap.registerPlugin('Geolocation') : null);
+    if (Geo) {
+      // Declenche la fenetre d'autorisation Android au premier lancement.
+      try { await Geo.requestPermissions(); } catch (e) { /* certaines versions n'exposent pas cette methode */ }
+      const pos = await Geo.getCurrentPosition({ enableHighAccuracy: true, timeout: 20000 });
+      return { lat: pos.coords.latitude, lon: pos.coords.longitude, acc: pos.coords.accuracy };
+    }
   }
 
   // Sinon : API du navigateur (test dans un onglet)
@@ -333,6 +345,7 @@ function hideDetail() { el.detail.hidden = true; }
 //  Flux principal : localiser puis chercher
 // ============================================================
 async function locateAndSearch() {
+  el.locateBtn.classList.remove('attention');
   setBusy(true);
   setStatus('Recherche de votre position\u2026');
 
@@ -433,7 +446,11 @@ function bindEvents() {
 document.addEventListener('DOMContentLoaded', () => {
   initMap();
   bindEvents();
-  setStatus('Appuyez sur le bouton \u25CE pour trouver les brasseries autour de vous.');
+  setStatus('Appuyez sur le bouton \u25CE (en bas a droite) pour trouver les brasseries autour de vous.');
+  el.locateBtn.classList.add('attention');   // pulsation pour reperer le bouton
   // Recalcule la taille de la carte une fois les polices/mise en page stabilisees.
-  setTimeout(() => state.map.invalidateSize(), 400);
+  setTimeout(() => {
+    state.map.invalidateSize();
+    if (!state.userPos) state.map.setView([46.6, 2.4], 5);
+  }, 400);
 });

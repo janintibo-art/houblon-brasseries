@@ -38,6 +38,15 @@ jobs:
       - name: Ajouter la plateforme Android (si absente)
         run: if [ ! -d "./android" ]; then npx cap add android; fi
 
+      - name: Garantir les permissions de localisation
+        run: |
+          MANIFEST=android/app/src/main/AndroidManifest.xml
+          if ! grep -q "ACCESS_FINE_LOCATION" "$MANIFEST"; then
+            sed -i 's#</manifest>#    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n</manifest>#' "$MANIFEST"
+          fi
+          echo "----- AndroidManifest.xml -----"
+          cat "$MANIFEST"
+
       - name: Synchroniser Capacitor
         run: npx cap sync android
 
