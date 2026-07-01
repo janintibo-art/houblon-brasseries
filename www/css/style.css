@@ -534,3 +534,5 @@ body {
   *, .sheet, .detail-panel, .sheet-caret svg { transition: none !important; animation: none !important; }
   .pin-user::after { display: none; }
 }
+
+.detail[hidden]{display:none}
