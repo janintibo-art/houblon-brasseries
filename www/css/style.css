@@ -53,7 +53,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  z-index: 20;
+  z-index: 60;
 }
 
 .brand { display: flex; align-items: center; gap: 11px; min-width: 0; }
@@ -134,6 +134,7 @@ body {
   position: absolute;
   inset: 0;
   background: #12100e;
+  z-index: 0;   /* isole les couches internes de Leaflet (sinon elles couvrent le bouton) */
 }
 
 /* Assombrit les tuiles claires d'OpenStreetMap sans toucher aux marqueurs */
@@ -172,7 +173,7 @@ body {
   place-items: center;
   cursor: pointer;
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--copper-hi) inset;
-  z-index: 19;
+  z-index: 50;
   transition: transform .12s, background .18s;
 }
 .fab svg { width: 26px; height: 26px; }
@@ -203,7 +204,7 @@ body {
   color: var(--foam);
   font-size: 13px;
   text-align: center;
-  z-index: 16;
+  z-index: 45;
   backdrop-filter: blur(6px);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
 }
@@ -212,6 +213,7 @@ body {
 /* ---------- Feuille : la "carte des bieres" ---------------- */
 
 .sheet {
+  position: relative;
   flex-shrink: 0;
   height: 58px;
   background: var(--oak);
@@ -222,7 +224,7 @@ body {
   display: flex;
   flex-direction: column;
   transition: height .34s cubic-bezier(.4, 0, .2, 1);
-  z-index: 18;
+  z-index: 40;
 }
 .sheet.is-open { height: 62vh; }
 
@@ -362,7 +364,7 @@ body {
 .detail {
   position: fixed;
   inset: 0;
-  z-index: 40;
+  z-index: 100;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;

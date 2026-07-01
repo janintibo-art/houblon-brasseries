@@ -435,7 +435,11 @@ function bindEvents() {
     if (state.userPos) { setBusy(true); runSearch().then(() => setBusy(false)); }
   });
 
-  el.sheetToggle.addEventListener('click', () => openSheet(!el.sheet.classList.contains('is-open')));
+  el.sheetToggle.addEventListener('click', () => {
+    // Tant qu'on n'a pas de position, la barre du bas sert aussi a lancer la recherche.
+    if (!state.userPos) { locateAndSearch(); return; }
+    openSheet(!el.sheet.classList.contains('is-open'));
+  });
   el.detailBack.addEventListener('click', hideDetail);
   el.detail.addEventListener('click', (ev) => { if (ev.target === el.detail) hideDetail(); });
 }
