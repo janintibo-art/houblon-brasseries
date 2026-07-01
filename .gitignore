@@ -1,0 +1,11 @@
+# Dependances
+node_modules/
+
+# Plateformes natives generees automatiquement par Capacitor (recreees a chaque build)
+android/
+ios/
+
+# Systeme
+.DS_Store
+Thumbs.db
+*.log

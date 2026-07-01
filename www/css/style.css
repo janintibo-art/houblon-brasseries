@@ -1,0 +1,536 @@
+/* ============================================================
+   HOUBLON — feuille de style
+   Ambiance "comptoir de brasserie" : noir chaud, cuivre, mousse.
+   ============================================================ */
+
+:root {
+  --stout:      #171009;   /* noir chaud (barres, fiche)      */
+  --oak:        #221812;   /* surfaces (liste)                */
+  --oak-2:      #2c201a;   /* elements en relief (puces)      */
+  --oak-3:      #3a2b22;   /* survol / actif                  */
+  --copper:     #d98a2b;   /* accent principal (ambre)        */
+  --copper-hi:  #f0a949;   /* accent clair                    */
+  --foam:       #f3e9d9;   /* texte creme                     */
+  --foam-dim:   #b6a48f;   /* texte attenue                   */
+  --foam-faint: #7d6f5f;   /* texte discret                   */
+  --hop:        #9fbe4f;   /* vert houblon (indicateur live)  */
+  --line:       rgba(243, 233, 217, 0.10);
+  --line-soft:  rgba(243, 233, 217, 0.06);
+  --shadow:     0 -14px 34px rgba(0, 0, 0, 0.45);
+
+  --font-display: "Barlow Condensed", system-ui, sans-serif;
+  --font-body: "Barlow", system-ui, -apple-system, sans-serif;
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--stout);
+  color: var(--foam);
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Barre du haut ---------------------------------- */
+
+.topbar {
+  flex-shrink: 0;
+  padding: calc(var(--safe-top) + 12px) 16px 12px;
+  background: linear-gradient(180deg, #1c130b 0%, var(--stout) 100%);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  z-index: 20;
+}
+
+.brand { display: flex; align-items: center; gap: 11px; min-width: 0; }
+
+.brand-mark {
+  width: 34px; height: 34px;
+  color: var(--copper);
+  flex-shrink: 0;
+}
+
+.brand-text { display: flex; flex-direction: column; line-height: 1; min-width: 0; }
+
+.brand-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 25px;
+  letter-spacing: 0.14em;
+  color: var(--foam);
+}
+
+.brand-tag {
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+  color: var(--foam-faint);
+  text-transform: uppercase;
+  margin-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Selecteur de rayon */
+.radius { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+
+.radius-label {
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--foam-faint);
+}
+
+.radius-chips { display: flex; align-items: center; gap: 4px; }
+
+.chip {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 15px;
+  width: 30px; height: 30px;
+  border: 1px solid var(--line);
+  background: var(--oak-2);
+  color: var(--foam-dim);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background .18s, color .18s, border-color .18s, transform .1s;
+}
+
+.chip:active { transform: scale(0.92); }
+
+.chip.is-active {
+  background: var(--copper);
+  color: #241503;
+  border-color: var(--copper-hi);
+  box-shadow: 0 3px 12px rgba(217, 138, 43, 0.35);
+}
+
+.radius-unit {
+  font-family: var(--font-display);
+  font-size: 13px;
+  color: var(--foam-faint);
+  margin-left: 2px;
+}
+
+/* ---------- Scene / carte --------------------------------- */
+
+.stage { position: relative; flex: 1 1 auto; min-height: 0; }
+
+#map {
+  position: absolute;
+  inset: 0;
+  background: #12100e;
+}
+
+/* Assombrit les tuiles claires d'OpenStreetMap sans toucher aux marqueurs */
+.leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9) saturate(0.72);
+}
+
+.leaflet-container { background: #12100e; font-family: var(--font-body); }
+
+.leaflet-control-attribution {
+  background: rgba(23, 16, 9, 0.82) !important;
+  color: var(--foam-faint) !important;
+  font-size: 10px !important;
+  backdrop-filter: blur(4px);
+}
+.leaflet-control-attribution a { color: var(--foam-dim) !important; }
+
+.leaflet-bar a {
+  background: var(--oak-2) !important;
+  color: var(--foam) !important;
+  border-bottom-color: var(--line) !important;
+}
+.leaflet-bar a:hover { background: var(--oak-3) !important; }
+
+/* Bouton flottant de localisation */
+.fab {
+  position: absolute;
+  right: 16px;
+  bottom: 18px;
+  width: 54px; height: 54px;
+  border: none;
+  border-radius: 16px;
+  background: var(--copper);
+  color: #241503;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--copper-hi) inset;
+  z-index: 15;
+  transition: transform .12s, background .18s;
+}
+.fab svg { width: 26px; height: 26px; }
+.fab:active { transform: scale(0.9); }
+.fab.is-busy { background: var(--oak-2); color: var(--copper); }
+.fab.is-busy svg { animation: spin 1s linear infinite; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Bandeau d'etat */
+.status {
+  position: absolute;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  max-width: calc(100% - 100px);
+  padding: 10px 16px;
+  background: rgba(23, 16, 9, 0.92);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--foam);
+  font-size: 13px;
+  text-align: center;
+  z-index: 16;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+.status.is-error { border-color: rgba(217, 90, 43, 0.5); color: #f0b49a; }
+
+/* ---------- Feuille : la "carte des bieres" ---------------- */
+
+.sheet {
+  flex-shrink: 0;
+  height: 58px;
+  background: var(--oak);
+  border-top: 1px solid var(--line);
+  border-radius: 20px 20px 0 0;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: height .34s cubic-bezier(.4, 0, .2, 1);
+  z-index: 18;
+}
+.sheet.is-open { height: 62vh; }
+
+.sheet-head {
+  flex-shrink: 0;
+  width: 100%;
+  height: 58px;
+  border: none;
+  background: transparent;
+  color: var(--foam);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 20px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.sheet-grip {
+  position: absolute;
+  top: 8px; left: 50%;
+  transform: translateX(-50%);
+  width: 38px; height: 4px;
+  border-radius: 4px;
+  background: var(--oak-3);
+}
+
+.sheet-title {
+  flex: 1;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 17px;
+  letter-spacing: 0.02em;
+  color: var(--foam);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sheet-title .count { color: var(--copper); }
+
+.sheet-caret svg { width: 22px; height: 22px; color: var(--foam-faint); transition: transform .34s; }
+.sheet.is-open .sheet-caret svg { transform: rotate(180deg); }
+
+/* La liste */
+.taplist {
+  list-style: none;
+  overflow-y: auto;
+  flex: 1;
+  padding: 2px 0 calc(var(--safe-bottom) + 10px);
+  -webkit-overflow-scrolling: touch;
+}
+
+.tap {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--foam);
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 13px 20px;
+  cursor: pointer;
+  text-align: left;
+  border-left: 3px solid transparent;
+  border-bottom: 1px solid var(--line-soft);
+  transition: background .15s;
+}
+.tap:hover, .tap:focus-visible { background: var(--oak-2); outline: none; }
+.tap.is-active { background: var(--oak-2); border-left-color: var(--copper); }
+
+.tap-mark {
+  flex-shrink: 0;
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #3a2a1c, #241811);
+  border: 1px solid rgba(217, 138, 43, 0.4);
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+}
+
+.tap-body { flex: 1; min-width: 0; }
+
+.tap-top { display: flex; align-items: baseline; gap: 4px; }
+
+.tap-name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 18px;
+  letter-spacing: 0.01em;
+  color: var(--foam);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 62%;
+}
+
+/* Les pointilles facon menu, entre le nom et la distance */
+.tap-leader {
+  flex: 1;
+  min-width: 14px;
+  align-self: flex-end;
+  margin-bottom: 6px;
+  border-bottom: 1.5px dotted var(--foam-faint);
+  opacity: 0.6;
+}
+
+.tap-dist {
+  flex-shrink: 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--copper);
+  font-variant-numeric: tabular-nums;
+}
+
+.tap-sub {
+  font-size: 12.5px;
+  color: var(--foam-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+/* Etat vide */
+.empty {
+  padding: 34px 28px;
+  text-align: center;
+  color: var(--foam-dim);
+}
+.empty strong { display: block; font-family: var(--font-display); font-size: 19px; color: var(--foam); margin-bottom: 8px; }
+.empty span { font-size: 14px; line-height: 1.5; }
+
+/* ---------- Fiche detaillee ------------------------------- */
+
+.detail {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.detail-panel {
+  background: var(--stout);
+  border-radius: 22px 22px 0 0;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp .3s cubic-bezier(.2, .7, .3, 1);
+  border-top: 1px solid var(--line);
+  box-shadow: 0 -20px 50px rgba(0, 0, 0, 0.6);
+}
+
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+.detail-back {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  background: transparent;
+  color: var(--copper);
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+  padding: calc(var(--safe-top) + 16px) 20px 8px;
+  cursor: pointer;
+}
+.detail-back svg { width: 22px; height: 22px; }
+
+.detail-body {
+  overflow-y: auto;
+  padding: 6px 24px calc(var(--safe-bottom) + 28px);
+}
+
+.d-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+  color: var(--foam);
+  margin-bottom: 12px;
+}
+
+.d-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
+
+.badge {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: var(--oak-2);
+  border: 1px solid var(--line);
+  color: var(--foam-dim);
+}
+.badge.badge-dist { background: rgba(217, 138, 43, 0.14); border-color: rgba(217, 138, 43, 0.4); color: var(--copper-hi); }
+
+.d-row {
+  padding: 14px 0;
+  border-top: 1px solid var(--line-soft);
+  display: flex;
+  gap: 14px;
+}
+.d-row:first-of-type { border-top: none; }
+
+.d-key {
+  flex-shrink: 0;
+  width: 92px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--foam-faint);
+  padding-top: 2px;
+}
+.d-val { flex: 1; font-size: 15px; line-height: 1.5; color: var(--foam); word-break: break-word; }
+.d-val a { color: var(--copper-hi); text-decoration: none; border-bottom: 1px solid rgba(240, 169, 73, 0.4); }
+
+.d-actions { display: flex; gap: 12px; margin-top: 26px; }
+
+.d-btn {
+  flex: 1;
+  text-align: center;
+  padding: 14px;
+  border-radius: 12px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: 0.03em;
+  text-decoration: none;
+  cursor: pointer;
+  border: 1px solid var(--line);
+}
+.d-btn-primary { background: var(--copper); color: #241503; border-color: var(--copper-hi); }
+.d-btn-ghost { background: var(--oak-2); color: var(--foam); }
+.d-btn.is-disabled { opacity: 0.4; pointer-events: none; }
+
+.d-note {
+  margin-top: 22px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--foam-faint);
+  padding: 14px 16px;
+  background: var(--oak);
+  border-radius: 12px;
+  border: 1px dashed var(--line);
+}
+
+/* ---------- Marqueurs Leaflet ----------------------------- */
+
+.pin-brewery {
+  width: 30px; height: 30px;
+  background: linear-gradient(150deg, var(--copper-hi), var(--copper));
+  border: 2px solid #2a1a0c;
+  border-radius: 50% 50% 50% 2px;
+  transform: rotate(45deg);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.55);
+  display: grid;
+  place-items: center;
+}
+.pin-brewery span { transform: rotate(-45deg); font-size: 15px; line-height: 1; }
+.pin-brewery.is-active {
+  background: linear-gradient(150deg, #ffd27a, var(--copper-hi));
+  border-color: var(--foam);
+  z-index: 500 !important;
+}
+
+.pin-user { width: 22px; height: 22px; position: relative; }
+.pin-user::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--hop);
+  border: 3px solid #f3e9d9;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.3);
+}
+.pin-user::after {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 2px solid var(--hop);
+  animation: pulse 2s ease-out infinite;
+}
+@keyframes pulse {
+  0% { transform: scale(0.5); opacity: 0.8; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+.leaflet-popup-content-wrapper {
+  background: var(--stout);
+  color: var(--foam);
+  border-radius: 10px;
+  border: 1px solid var(--line);
+}
+.leaflet-popup-tip { background: var(--stout); border: 1px solid var(--line); }
+.leaflet-popup-content { margin: 10px 14px; font-family: var(--font-body); }
+.leaflet-popup-content b { font-family: var(--font-display); font-size: 16px; letter-spacing: 0.01em; }
+
+/* ---------- Divers ---------------------------------------- */
+
+:focus-visible { outline: 2px solid var(--copper-hi); outline-offset: 2px; }
+
+@media (min-width: 620px) {
+  .sheet.is-open { height: 54vh; }
+  .brand-tag { font-size: 11px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, .sheet, .detail-panel, .sheet-caret svg { transition: none !important; animation: none !important; }
+  .pin-user::after { display: none; }
+}

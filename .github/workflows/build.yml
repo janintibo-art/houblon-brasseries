@@ -1,0 +1,66 @@
+name: Construire l'APK
+
+# Se declenche a chaque envoi de code sur la branche main,
+# et peut aussi etre lance a la main depuis l'onglet "Actions".
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+# Necessaire pour publier l'APK dans les "Releases".
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Recuperer le code
+        uses: actions/checkout@v4
+
+      - name: Installer Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Installer Java (JDK 21)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Preparer le SDK Android
+        uses: android-actions/setup-android@v3
+
+      - name: Installer les dependances
+        run: npm install
+
+      - name: Ajouter la plateforme Android (si absente)
+        run: if [ ! -d "./android" ]; then npx cap add android; fi
+
+      - name: Synchroniser Capacitor
+        run: npx cap sync android
+
+      - name: Construire l'APK de debug
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Renommer l'APK
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk houblon.apk
+
+      - name: Publier l'APK (artefact telechargeable)
+        uses: actions/upload-artifact@v4
+        with:
+          name: houblon-apk
+          path: houblon.apk
+
+      - name: Publier l'APK dans les Releases
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "build-${{ github.run_number }}" \
+            houblon.apk \
+            --title "Houblon — build #${{ github.run_number }}" \
+            --notes "APK de test genere automatiquement. Telechargez houblon.apk ci-dessous et installez-le sur votre telephone Android."
