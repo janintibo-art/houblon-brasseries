@@ -47,6 +47,9 @@ jobs:
           echo "----- AndroidManifest.xml -----"
           cat "$MANIFEST"
 
+      - name: Generer l'icone et l'ecran de lancement
+        run: npx @capacitor/assets generate --android
+
       - name: Synchroniser Capacitor
         run: npx cap sync android
 
