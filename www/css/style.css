@@ -210,6 +210,39 @@ body {
 }
 .status.is-error { border-color: rgba(217, 90, 43, 0.5); color: #f0b49a; }
 
+/* Bouton "Rechercher dans cette zone" (mode exploration) */
+.search-here {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 46;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 16px;
+  border: 1px solid var(--copper-hi);
+  border-radius: 999px;
+  background: var(--copper);
+  color: #241503;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  animation: dropIn .18s ease-out;
+}
+.search-here svg { width: 18px; height: 18px; }
+.search-here:active { transform: translateX(-50%) scale(0.95); }
+.search-here[hidden] { display: none; }   /* l'attribut hidden doit l'emporter */
+
+@keyframes dropIn {
+  from { opacity: 0; transform: translate(-50%, -8px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+
 /* ---------- Feuille : la "carte des bieres" ---------------- */
 
 .sheet {
@@ -501,7 +534,16 @@ body {
   z-index: 500 !important;
 }
 
-.pin-user { width: 22px; height: 22px; position: relative; }
+.pin-user {
+  width: 22px; height: 22px; position: relative;
+}
+.pin-search {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  border: 3px solid var(--copper-hi);
+  background: rgba(217, 138, 43, 0.28);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.5);
+}
 .pin-user::before {
   content: "";
   position: absolute;

@@ -14,10 +14,13 @@ const state = {
   map: null,
   userMarker: null,
   accuracyCircle: null,
+  searchMarker: null,   // marqueur du point choisi en mode exploration
   markers: {},          // id -> marqueur Leaflet
   breweries: [],        // liste courante
   radius: 5000,         // metres
-  userPos: null,        // { lat, lon }
+  userPos: null,        // { lat, lon } : position GPS reelle
+  center: null,         // { lat, lon } : point autour duquel on cherche
+  ignoreNextZoom: false,// pour ne pas afficher "Rechercher ici" apres un zoom automatique
   activeId: null,
 };
 
@@ -25,6 +28,7 @@ const state = {
 const el = {
   status:      document.getElementById('status'),
   locateBtn:   document.getElementById('locateBtn'),
+  searchHere:  document.getElementById('searchHere'),
   radiusChips: document.getElementById('radiusChips'),
   sheet:       document.getElementById('sheet'),
   sheetToggle: document.getElementById('sheetToggle'),
@@ -58,6 +62,14 @@ function initMap() {
 
   // Mention en bas a gauche : laisse le coin bas-droit libre pour le bouton.
   if (state.map.attributionControl) state.map.attributionControl.setPosition('bottomleft');
+
+  // Mode exploration : des que l'utilisateur deplace ou zoome la carte lui-meme,
+  // on propose de chercher dans la zone affichee.
+  state.map.on('dragend', () => showSearchHere(true));
+  state.map.on('zoomend', () => {
+    if (state.ignoreNextZoom) { state.ignoreNextZoom = false; return; }
+    showSearchHere(true);
+  });
 }
 
 // ============================================================
@@ -271,7 +283,7 @@ function selectBrewery(id, openDetail) {
   // Met en avant la ligne de la liste
   el.taplist.querySelectorAll('.tap').forEach((t) => t.classList.toggle('is-active', t.dataset.id === id));
 
-  state.map.panTo([b.lat, b.lon], { animate: true });
+  moveMapTo(b.lat, b.lon);
   if (openDetail) showDetail(b);
 }
 
@@ -342,7 +354,7 @@ function showDetail(b) {
 function hideDetail() { el.detail.hidden = true; }
 
 // ============================================================
-//  Flux principal : localiser puis chercher
+//  Flux principal : localiser (GPS) puis chercher
 // ============================================================
 async function locateAndSearch() {
   el.locateBtn.classList.remove('attention');
@@ -362,26 +374,45 @@ async function locateAndSearch() {
   }
 
   state.userPos = pos;
+  state.center = { lat: pos.lat, lon: pos.lon };
+  removeSearchMarker();                 // en GPS, le point de reference est le point bleu-vert
   placeUser(pos.lat, pos.lon, pos.acc);
-  state.map.setView([pos.lat, pos.lon], 13, { animate: true });
+  showSearchHere(false);
+  moveMapTo(pos.lat, pos.lon, 13);
 
   await runSearch();
   setBusy(false);
 }
 
+// ============================================================
+//  Mode exploration : chercher autour du point affiche a l'ecran
+// ============================================================
+async function searchArea() {
+  const c = state.map.getCenter();
+  state.center = { lat: c.lat, lon: c.lng };
+  placeSearchMarker(c.lat, c.lng);
+  showSearchHere(false);
+  setBusy(true);
+  await runSearch();
+  setBusy(false);
+}
+
+// ============================================================
+//  Recherche des brasseries autour de state.center
+// ============================================================
 async function runSearch() {
-  if (!state.userPos) return;
+  if (!state.center) return;
   setStatus('Recherche des brasseries dans un rayon de ' + (state.radius / 1000) + '\u00a0km\u2026');
 
   let elements;
   try {
-    elements = await fetchBreweries(state.userPos.lat, state.userPos.lon, state.radius);
+    elements = await fetchBreweries(state.center.lat, state.center.lon, state.radius);
   } catch (e) {
     setStatus('Donnees indisponibles pour le moment. Reessayez dans un instant.', true);
     return;
   }
 
-  state.breweries = parseBreweries(elements, state.userPos.lat, state.userPos.lon);
+  state.breweries = parseBreweries(elements, state.center.lat, state.center.lon);
   renderMarkers(state.breweries);
   renderList(state.breweries);
 
@@ -408,6 +439,30 @@ function openSheet(open) {
   setTimeout(() => state.map.invalidateSize(), 360);
 }
 
+// Affiche ou masque le bouton "Rechercher dans cette zone".
+function showSearchHere(show) { el.searchHere.hidden = !show; }
+
+// Deplace la carte sans declencher le bouton "Rechercher ici" (mouvement automatique).
+function moveMapTo(lat, lon, zoom) {
+  if (zoom != null) {
+    state.ignoreNextZoom = true;
+    setTimeout(() => { state.ignoreNextZoom = false; }, 700);
+    state.map.setView([lat, lon], zoom, { animate: true });
+  } else {
+    state.map.panTo([lat, lon], { animate: true });
+  }
+}
+
+// Petit repere du point choisi en mode exploration (reference des distances).
+function placeSearchMarker(lat, lon) {
+  removeSearchMarker();
+  const icon = L.divIcon({ className: '', html: '<div class="pin-search"></div>', iconSize: [20, 20], iconAnchor: [10, 10] });
+  state.searchMarker = L.marker([lat, lon], { icon, interactive: false, zIndexOffset: 900 }).addTo(state.map);
+}
+function removeSearchMarker() {
+  if (state.searchMarker) { state.map.removeLayer(state.searchMarker); state.searchMarker = null; }
+}
+
 function formatDist(km) {
   return km < 1 ? Math.round(km * 1000) + ' m' : km.toFixed(1).replace('.', ',') + ' km';
 }
@@ -424,6 +479,7 @@ function escapeHtml(s) {
 // ============================================================
 function bindEvents() {
   el.locateBtn.addEventListener('click', locateAndSearch);
+  el.searchHere.addEventListener('click', searchArea);
 
   el.radiusChips.addEventListener('click', (ev) => {
     const chip = ev.target.closest('.chip');
@@ -431,13 +487,13 @@ function bindEvents() {
     el.radiusChips.querySelectorAll('.chip').forEach((c) => c.classList.remove('is-active'));
     chip.classList.add('is-active');
     state.radius = parseInt(chip.dataset.radius, 10);
-    // Si on a deja une position, on relance la recherche tout de suite.
-    if (state.userPos) { setBusy(true); runSearch().then(() => setBusy(false)); }
+    // Si une recherche a deja un point de reference, on la relance tout de suite.
+    if (state.center) { setBusy(true); runSearch().then(() => setBusy(false)); }
   });
 
   el.sheetToggle.addEventListener('click', () => {
-    // Tant qu'on n'a pas de position, la barre du bas sert aussi a lancer la recherche.
-    if (!state.userPos) { locateAndSearch(); return; }
+    // Tant qu'aucune recherche n'a ete faite, la barre du bas lance la localisation GPS.
+    if (!state.center) { locateAndSearch(); return; }
     openSheet(!el.sheet.classList.contains('is-open'));
   });
   el.detailBack.addEventListener('click', hideDetail);
@@ -450,11 +506,15 @@ function bindEvents() {
 document.addEventListener('DOMContentLoaded', () => {
   initMap();
   bindEvents();
-  setStatus('Appuyez sur le bouton \u25CE (en bas a droite) pour trouver les brasseries autour de vous.');
+  setStatus('Appuyez sur le bouton \u25CE (en bas a droite), ou baladez-vous sur la carte et touchez \u00ab Rechercher dans cette zone \u00bb.');
   el.locateBtn.classList.add('attention');   // pulsation pour reperer le bouton
   // Recalcule la taille de la carte une fois les polices/mise en page stabilisees.
   setTimeout(() => {
     state.map.invalidateSize();
-    if (!state.userPos) state.map.setView([46.6, 2.4], 5);
+    if (!state.center) {
+      state.ignoreNextZoom = true;
+      setTimeout(() => { state.ignoreNextZoom = false; }, 700);
+      state.map.setView([46.6, 2.4], 5);
+    }
   }, 400);
 });
